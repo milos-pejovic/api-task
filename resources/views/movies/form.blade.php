@@ -9,7 +9,6 @@
         @csrf
         <fieldset>
             <legend class="mb-3">Filter Movies</legend>
-
   
             <div class="mb-3 col-4">
                 <label for="search_name" class="form-label">Search name</label>

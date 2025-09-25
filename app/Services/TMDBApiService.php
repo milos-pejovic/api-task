@@ -4,61 +4,77 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log; 
+use App\Models\Search;
 
 class TMDBApiService {
     private string $baseUrl = 'https://api.themoviedb.org/3';
     private string $api_key;
+    private int $retries;
+    private int $retriesInterval;
 
     public function __construct(){
         $this->api_key = config('services.tmdb.api_token');
+        $this->retries = config('services.tmdb.retries');
+        $this->retriesInterval = config('services.tmdb.retries_interval');
     }
 
     /**
-     * getGenres
+     * Undocumented function
      *
-     * @return array
+     * @param string $routeName
+     * @param string $url
+     * @param array|null $params
+     * @return void
      */
-    public function getGenres()
-    {
-        $response = Http::withToken($this->api_key)
-            ->acceptJson()
-            ->get("{$this->baseUrl}/genre/movie/list");
+    public function callRoute(string $routeName, string $url, ?array $params = null) {
+        try {
+            $response = Http::withToken($this->api_key)
+                ->retry($this->retries, $this->retriesInterval)
+                ->acceptJson()
+                ->get($url, $params);
 
-        if ($response->successful()) {
-            $genres = $response->json();
-            return $genres;
-        } else if ($response->failed()){
-            throw new \Exception("Error fetching movie genres. Error:"); //TODO: Add error text
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data;
+            } 
+
+            throw new \Exception(
+                "Error calling route {$routeName} (Status {$response->status()}): " . $response->body()
+            );
+        } catch (\Exception $e) {
+            Log::error("Error: {$e->getMessage()}");
         }
     }
 
     /**
      * Undocumented function
      *
-     * @param integer $genreId
+     * @param array $preparedParams
      * @return void
      */
-    public function getTopByGenre(array $genreIds) {
-        $response = Http::withToken(config('services.tmdb.api_token'))
-            ->get("{$this->baseUrl}/discover/movie", [
-                // can be a comma (AND) or pipe (OR) separated query TODO: check this
-                // 'with_genres' => "12+28", // AND search (genre_1 AND genre_2) DOES NOT ALWAYS WORK
-                'with_genres' => implode(",", $genreIds), // OR search (genre_1 OR genre_2)
-                'sort_by' => 'vote_average.desc',
-                'sort_by' => 'popularity.desc',
-                'page' => 1,
-                'vote_count.gte' => 1000
-            ]);
+    public function discover(array $preparedParams) {
+        $url = "{$this->baseUrl}/discover/movie";
+        return $this->callRoute("discover", $url, $preparedParams);
+    }
 
-        if ($response->successful()) {
-            $remaining = $response->header('X-RateLimit-Remaining');
-            Log::info("Remaining calls: {$remaining}");
+    /**
+     * Undocumented function
+     *
+     * @param integer $movieId
+     * @return void
+     */
+    public function getSingleMovieDetails(int $movieId){
+        $url = "{$this->baseUrl}/movie/{$movieId}";
+        return $this->callRoute("single_move_details", $url);
+    }
 
-
-            $topMoviesByGenre = $response->json();
-            return $topMoviesByGenre;
-        } else if ($response->failed()){
-            throw new \Exception("Error fetching top movies by genre. Error:"); //TODO: Add error text
-        }
+    /**
+     * Undocumented function
+     *
+     * @return void
+     */
+    public function getGenres() {
+        $url = "{$this->baseUrl}/genre/movie/list";
+        return $this->callRoute("get_genres", $url);
     }
 }

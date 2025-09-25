@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\TMDBApiService;
 use Illuminate\Support\Facades\Log; 
 use App\Models\Search;
-use App\Jobs\ProcessMovieData;
+use App\Jobs\ProcessMovieDataJob;
 
 class MoviesController extends Controller
 {
     /**
      * Genre IDs in The Movie Database
+     * //TODO Move this to a utility class
      *
      * @var array
      */
@@ -53,7 +53,7 @@ class MoviesController extends Controller
      * processForm
      *
      * @param Request $request
-     * @return void
+     * @return void //TODO: return redirect
      */
     public function processForm(Request $request){
         //TODO Move this to a custom form validation class
@@ -66,8 +66,8 @@ class MoviesController extends Controller
         ]);
         //TODO Move this to a custom form validation class
 
-        $search = Search::create($validated);
-        ProcessMovieData::dispatch($search );
-        return redirect()->route('movies.form.show');
+        $search_id = Search::create($validated);
+        ProcessMovieDataJob::dispatch($search_id);
+        return redirect()->route('searches.list');
     }
 }

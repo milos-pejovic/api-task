@@ -36,7 +36,8 @@ return [
     ],
 
     'tmdb' => [
-        'api_token' => env('TMDB_API_KEY')
+        'api_token' => env('TMDB_API_KEY'),
+        'retries' => 3,
+        'retries_interval' => 1000 // 1 second
     ]
-
 ];
