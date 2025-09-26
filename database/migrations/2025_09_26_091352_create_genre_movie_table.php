@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('searches', function (Blueprint $table) {
+        Schema::create('genre_movie', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('genre_id')->constrained()->onDelete('cascade');
+            $table->foreignId('movie_id')->constrained()->onDelete('cascade');
             $table->timestamps();
-            $table->string('name', 256);
-            $table->text('search_parameters');
-            $table->string('status', 64)->default('in progress');
-            $table->text('movies_tmdb_ids')->nullable();
         });
     }
 
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('searches');
+        Schema::dropIfExists('genre_movie');
     }
 };

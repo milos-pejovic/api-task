@@ -30,7 +30,11 @@ class ProcessMovieDataJob implements ShouldQueue
     public function handle(TMDBService $tmdb): void
     {
         Log::info('STARTING move processing Job');
-        $tmdb->getMovies($this->searchId);
+        try {
+            $tmdb->getMovies($this->searchId);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
         Log::info('ENDING move processing Job');
     }
 }

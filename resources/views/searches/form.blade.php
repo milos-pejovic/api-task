@@ -5,7 +5,7 @@
 @section('content')
     <h1>Give me movies</h1>
 
-    <form action="{{ route('movies.form.process') }}" method="POST" class="p-4 border rounded shadow-sm bg-light">
+    <form action="{{ route('search.form.process') }}" method="POST" class="p-4 border rounded shadow-sm bg-light">
         @csrf
         <fieldset>
             <legend class="mb-3">Filter Movies</legend>

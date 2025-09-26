@@ -5,13 +5,17 @@ namespace App\Services;
 use Illuminate\Support\Facades\Log;
 use App\Models\Search;
 use App\Services\TMDBApiService;
+use App\Models\Movie;
+use App\Services\MovieService;
 
 class TMDBService {
 
     private TMDBApiService $tmdbApi;
+    private MovieService $movieService;
 
     public function __construct(){
         $this->tmdbApi = new TMDBApiService();
+        $this->movieService = new MovieService();
     }
 
     /**
@@ -20,15 +24,27 @@ class TMDBService {
      * @param integer $searchId
      * @return void
      */
-    public function getMovies(int $searchId){
+    public function getMovies(int $searchId) {
         Log::info('Searching for movies');
         $search = Search::find($searchId);
         $params = json_decode($search->search_parameters, true);
         $prepared_params = $this->prepareParametersForDiscover($params);
+
         Log::info($params);
-        $res = $this->tmdbApi->discover($prepared_params);
-        $movieIds = array_column($res['results'], 'id');
-        Log::info($movieIds);
+
+        $moviesFromTmdb = $this->tmdbApi->discover($prepared_params);
+        $ids = $this->movieService->insertMoviesFromApi($moviesFromTmdb);
+
+            // TODO
+            // If the User checked the "detailed movie data"
+            // Check which movies have teh detailed data (have a bool field "detailed_data")
+            // Get details for every movie without detailed data 
+
+        $search->movies_tmdb_ids = implode(',', $ids);
+        $search->status = 'done';
+        $search->save();
+
+        Log::info('SUCCESS');
     }
 
     /**

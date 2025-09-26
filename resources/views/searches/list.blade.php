@@ -22,12 +22,17 @@
                     <th scope="row">{{ $i++ }}</th>
                     <td>{{ $search->name }}</td>
                     <td>{{ $search->status }}</td>
-                    <td><a href="#">Link</a></td>
+                    @if ($search->status == 'done')
+                        <td><a href="{{ route('search.report', ['id' => $search->id]) }}">Link</a></td>
+                    @else
+                        <td><a href="#">Link</a></td>
+                    @endif
+ 
                 </tr>
         @endforeach
             </tbody>
          </table>
     @else
-        <p>Create a new <a href="{{ route('movies.form.show') }}">SEARCH</a></p>
+        <p>Create a new <a href="{{ route('search.form.show') }}">SEARCH</a></p>
     @endif
 @endsection

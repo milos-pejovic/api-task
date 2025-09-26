@@ -5,10 +5,12 @@ use App\Http\Controllers\MoviesController;
 use App\Http\Controllers\SearchController;
 
 Route::prefix('movie')->group(function () {
-    Route::get('/form', [MoviesController::class, 'showForm'])->name('movies.form.show');
-    Route::post('/process', [MoviesController::class, 'processForm'])->name('movies.form.process');
+    Route::get('/form', [SearchController::class, 'showForm'])->name('search.form.show');
+    Route::post('/process', [SearchController::class, 'processForm'])->name('search.form.process');
 });
 
 Route::prefix('search')->group(function() {
-    Route::get('/list', [SearchController::class, 'list'])->name('searches.list');
+    Route::get('/list', [SearchController::class, 'list'])->name('search.list');
+    Route::get('/report/{id}', [SearchController::class, 'report'])->name('search.report');
+    Route::get('/test', [SearchController::class, 'test'])->name('search.test'); //TODO: remove
 });
