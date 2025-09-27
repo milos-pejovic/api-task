@@ -28,9 +28,12 @@ class TMDBService {
         Log::info('Searching for movies');
         $search = Search::find($searchId);
         $params = json_decode($search->search_parameters, true);
+        if (!$params) {
+            throw new \Exception("No search parameters found, aborting");
+        }
         $prepared_params = $this->prepareParametersForDiscover($params);
 
-        Log::info($params);
+        Log::info($prepared_params);
 
         $moviesFromTmdb = $this->tmdbApi->discover($prepared_params);
         $ids = $this->movieService->insertMoviesFromApi($moviesFromTmdb);
@@ -43,8 +46,6 @@ class TMDBService {
         $search->movies_tmdb_ids = implode(',', $ids);
         $search->status = 'done';
         $search->save();
-
-        Log::info('SUCCESS');
     }
 
     /**
@@ -55,16 +56,27 @@ class TMDBService {
      */
     private function prepareParametersForDiscover(array $params) : array
     {
+
+        Log::info($params);
+
+        // Title
+        if (key_exists('title', $params) and $params['title']) {
+            $prepared_params['title'] = $params['title'];
+        }
+
+        // Genres
         $prepared_params = [];
         if (key_exists('genres', $params)) {
             $prepared_params['with_genres'] = implode(',', $params['genres']);
         }
         //TODO: Add Genres "OR" search
 
+        // Realease date - start
         if (key_exists('release_from', $params) and $params['release_from']) {
             $prepared_params['primary_release_date.gte'] = $params['release_from'];
         }
 
+        // Realease date - end
         if (key_exists('release_to', $params) and $params['release_to']) {
             $prepared_params['primary_release_date.lte'] = $params['release_to'];
         }

@@ -56,7 +56,6 @@ class SearchController extends Controller
      * @return void //TODO: return redirect
      */
     public function processForm(Request $request){
-        //TODO Move this to a custom form validation class
         $validated = $request->validate([
             'search_name'  => 'required|string|max:255',
             'release_from'  => 'nullable|date',
@@ -64,7 +63,6 @@ class SearchController extends Controller
             'genres'         => 'nullable|array',
             'genres.*'       => 'integer',
         ]);
-        //TODO Move this to a custom form validation class
 
         $search_id = Search::create($validated);
         ProcessMovieDataJob::dispatch($search_id);
@@ -93,7 +91,7 @@ class SearchController extends Controller
         //TODO: move this somewhere else?
         $search = Search::find($searchId);
         $movieTmdbIds = explode(',', $search->movies_tmdb_ids);
-        $movies = Movie::whereIn('tmdb_id', $movieTmdbIds)->get();
+        $movies = Movie::whereIn('tmdb_id', $movieTmdbIds)->with('genres')->get();
         return view('searches.report')->with([
             'movies' => $movies
         ]);

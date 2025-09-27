@@ -6,7 +6,7 @@
     <h1>Give me movies</h1>
 
     @if (count($movies) > 0)
-        <?php $i = 1; ?>
+        <?php $i = 1;?>
         @foreach($movies as $movie)
 
             <div class="container my-3">
@@ -45,7 +45,20 @@
                                     <span class="me-3"><strong>Release:</strong> {{ $movie->release_date ?? 'Unknown' }}</span>
                                     <span class="me-3"><strong>Pop:</strong> {{ number_format($movie->popularity, 1) }}</span>
                                     <span class="me-3"><strong>⭐</strong> {{ $movie->vote_average }} ({{ $movie->vote_count }})</span>
+                                    
                                     <span><strong>ID:</strong> {{ $movie->tmdb_id }}</span>
+                                </div>
+
+                                <div class="d-flex flex-wrap small">
+                                    @if (isset($movie->genres) and count($movie->genres) > 0)
+                                        <span class="me-3"><strong>Genres:</strong>
+                                        @foreach($movie->genres as $genre)
+                                            <span class="me-3">{{ $genre->name }}</span>
+                                        @endforeach
+                                        </span>
+                                    @else
+                                        <span><strong>No genres data</strong></span>
+                                    @endif
                                 </div>
 
                                 <div class="mt-2">

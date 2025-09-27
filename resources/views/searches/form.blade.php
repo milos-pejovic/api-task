@@ -16,6 +16,11 @@
             </div>
 
             <div class="mb-3 col-4">
+                <label for="title" class="form-label">Movie Title</label>
+                <input type="text" name="title" id="title" class="form-control">
+            </div>
+
+            <div class="mb-3 col-4">
                 <label for="release_from" class="form-label">Released From</label>
                 <input type="date" name="release_from" id="release_from" class="form-control">
             </div>

@@ -9,6 +9,7 @@ use App\Services\TMDBService;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Models\Search;
 
 class ProcessMovieDataJob implements ShouldQueue
 {
@@ -29,12 +30,16 @@ class ProcessMovieDataJob implements ShouldQueue
      */
     public function handle(TMDBService $tmdb): void
     {
-        Log::info('STARTING move processing Job');
+        Log::info('STARTING JOB - movie processing');
         try {
             $tmdb->getMovies($this->searchId);
         } catch (\Exception $e) {
+            $search = Search::find($this->searchId);
+            $search->status = "error";
+            $search->save();
+
             Log::error($e->getMessage());
         }
-        Log::info('ENDING move processing Job');
+        Log::info('ENDING JOB - movie processing');
     }
 }

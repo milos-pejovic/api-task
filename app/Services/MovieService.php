@@ -11,8 +11,13 @@ use Carbon\Carbon;;
 
 class MovieService {
 
-
-    private function getGenreMappings() {
+    /**
+     * Undocumented function
+     *
+     * @return array
+     */
+    private function getGenreMappings() : array
+    {
         $genres = \App\Models\Genre::all()->toArray();
         return array_combine(
             array_column($genres, "tmdb_id"), 
@@ -20,16 +25,116 @@ class MovieService {
         );
     }
 
-    private function getExistingMoviesTmdbIds($movieTmdbIds) {
+    /**
+     * Undocumented function
+     *
+     * @param array $movieTmdbIds
+     * @return array
+     */
+    private function getExistingMoviesTmdbIds(array $movieTmdbIds) : array
+    {
         return Movie::whereIn("tmdb_id", $movieTmdbIds)
             ->pluck("tmdb_id")
             ->toArray();
     }
 
-    private function getMoviesToInsert($moviesFromTmdb, $existingMoviesTmdbsIds) {
+    /**
+     * Undocumented function
+     *
+     * @param array $moviesFromTmdb
+     * @param array $existingMoviesTmdbsIds
+     * @return array
+     */
+    private function getMoviesToInsert(array $moviesFromTmdb, array $existingMoviesTmdbsIds) : array
+    {
         return array_filter($moviesFromTmdb, function($movie) use ($existingMoviesTmdbsIds) {
             return !in_array($movie['id'], $existingMoviesTmdbsIds);
         });
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param array $moviesToInsert
+     * @return array
+     */
+    private function insertMovies(array $moviesToInsert) : array
+    {
+        Log::info('Preparing movie data from lcoal DB');
+        $genresPerMovieTmbdIds = [];
+        $newMoviesData = [];
+        foreach ($moviesToInsert as $movie) {
+            $movie['tmdb_id'] = $movie['id'];
+            $genresPerMovieTmbdIds[$movie['tmdb_id']] = $movie['genre_ids'];
+            unset($movie['id']);
+            unset($movie['genre_ids']);
+            unset($movie['adult']);
+            unset($movie['video']); //TODO: possibly keep?
+            unset($movie['backdrop_path']); //TODO: possibly keep?
+            $movie['release_date'] = ($movie['release_date']) ? $movie['release_date']  : null;
+            $movie['created_at'] = now()->toDateTimeString();
+            $movie['updated_at'] = now()->toDateTimeString();
+            $newMoviesData[] = $movie;
+        }
+
+        Log::info('Before entering movie data into local DB');
+        
+        Movie::insert($newMoviesData); //TODO: Add try and/or DB::transaction
+        Log::info('After entering movie data into local DB');
+        return $genresPerMovieTmbdIds;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param array $moviesToInsert
+     * @return array
+     */
+    private function getExistingMovieTmbdIdsToIds(array $moviesToInsert): array
+    {
+        $existingMovieRecords = Movie::whereIn("tmdb_id", array_column($moviesToInsert, 'id'))
+            ->get(['id', 'tmdb_id'])
+            ->toArray();
+            
+        return array_combine(
+            array_column($existingMovieRecords, 'tmdb_id'),
+            array_column($existingMovieRecords, 'id')
+        );
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param array $genresPerMovieTmbdIds
+     * @param array $movieTmdbIdsToIds
+     * @param array $genreTmdbsToIds
+     * @return void
+     */
+    private function insertGenreData(
+        array $genresPerMovieTmbdIds, 
+        array $movieTmdbIdsToIds, 
+        array $genreTmdbsToIds
+    ) {
+        Log::info('Preparing movie to genre data');
+        $genresDataToAdd = [];
+        foreach ($genresPerMovieTmbdIds as $movieTmdbId => $genreTmdbIds) {
+            foreach ($genreTmdbIds as $genreTmbdId) {
+                $genresDataToAdd[] = [
+                    'movie_id'   => $movieTmdbIdsToIds[$movieTmdbId],
+                    'genre_id'   => $genreTmdbsToIds[$genreTmbdId],
+                    'created_at' => now()->toDateTimeString(),
+                    'updated_at' => now()->toDateTimeString()
+                ];
+            }
+        }
+
+        Log::info('Before entering move to genre data');
+
+        if ($genresDataToAdd) {
+            Log::info("Entering genre data into DB.");
+            DB::table('genre_movie')->insertOrIgnore($genresDataToAdd);
+        }
+        Log::info('After entering move to genre data');
     }
 
     /**
@@ -46,63 +151,36 @@ class MovieService {
 
         $moviesFromTmdb = $moviesData['results'];
         $movieTmdbIds = array_column($moviesFromTmdb, 'id');
-        $existingMoviesTmdbsIds = $this->getExistingMoviesTmdbIds($movieTmdbIds);
-        $moviesToInsert = $this->getMoviesToInsert($moviesFromTmdb, $existingMoviesTmdbsIds);
 
-        if (count($moviesToInsert) == 0) {
-            Log::info("No new movies to insert.");
-            return $movieTmdbIds;
-        }
+        // Get the tmdb_id of movies already in the local DB
+        $existingMoviesTmdbsIds = $this->getExistingMoviesTmdbIds($movieTmdbIds); 
 
-        $newMoviesData = [];
-        foreach ($moviesToInsert as $movie) {
-            $movie['tmdb_id'] = $movie['id'];
-            $genresPerMovieTmbdIds[$movie['tmdb_id']] = $movie['genre_ids'];
-            unset($movie['id']);
-            unset($movie['genre_ids']);
-            unset($movie['adult']);
-            unset($movie['video']);
-            unset($movie['backdrop_path']);
-            $movie['release_date'] = ($movie['release_date']) ? $movie['release_date']  : null;
-            $movie['created_at'] = now()->toDateTimeString();
-            $movie['updated_at'] = now()->toDateTimeString();
-            $newMoviesData[] = $movie;
-        }
+        try {
+            DB::beginTransaction();
 
-        Log::info(222);
+            // Get the movies to be inserted into local DB
+            $moviesToInsert = $this->getMoviesToInsert($moviesFromTmdb, $existingMoviesTmdbsIds); 
 
-        Movie::insert($newMoviesData);
-
-        Log::info(333);
-        
-        $existingMovieRecords = Movie::whereIn("tmdb_id", array_column($moviesToInsert, 'id'))
-            ->get(['id', 'tmdb_id'])
-            ->toArray();
-            
-        $movieTmdbIdsToIds = array_combine(
-            array_column($existingMovieRecords, 'tmdb_id'),
-            array_column($existingMovieRecords, 'id')
-        );
-
-        Log::info(444);
-
-        $genresDataToAdd = [];
-
-        foreach ($genresPerMovieTmbdIds as $movieTmdbId => $genreTmdbIds) {
-            foreach ($genreTmdbIds as $genreTmbdId) {
-                $genresDataToAdd[] = [
-                    'movie_id'   => $movieTmdbIdsToIds[$movieTmdbId],
-                    'genre_id'   => $genreTmdbsToIds[$genreTmbdId],
-                    'created_at' => now()->toDateTimeString(),
-                    'updated_at' => now()->toDateTimeString()
-                ];
+            if (count($moviesToInsert) == 0) {
+                Log::info("All movies from the TMBD API are already in the local database.");
+                return $movieTmdbIds;
             }
-        }
 
-        Log::info(555);
+            // Insert movies into local DB
+            // Get the genres per movie mappings
+            $genresPerMovieTmbdIds = $this->insertMovies($moviesToInsert);
 
-        if ($genresDataToAdd) {
-            DB::table('genre_movie')->insertOrIgnore($genresDataToAdd);
+            // Get tmbd_id to id mappings of records entered into database
+            $movieTmdbIdsToIds = $this->getExistingMovieTmbdIdsToIds($moviesToInsert);
+
+            // Insert movie to genre data
+            $this->insertGenreData($genresPerMovieTmbdIds, $movieTmdbIdsToIds, $genreTmdbsToIds);
+
+            DB::commit();
+        } catch(\Exception $e) {
+            Log::error("ERROR entering data into local database. Error: {$e->getMessage()}");
+            DB::rollback();
+            throw $e;
         }
 
         return $movieTmdbIds;

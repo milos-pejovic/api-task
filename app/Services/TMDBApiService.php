@@ -14,8 +14,8 @@ class TMDBApiService {
 
     public function __construct(){
         $this->api_key = config('services.tmdb.api_token');
-        $this->retries = config('services.tmdb.retries');
-        $this->retriesInterval = config('services.tmdb.retries_interval');
+        $this->retries = config('services.tmdb.retries'); // Default: 3 times
+        $this->retriesInterval = config('services.tmdb.retries_interval'); // Default: 1 second
     }
 
     /**
