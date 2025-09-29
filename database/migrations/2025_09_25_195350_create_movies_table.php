@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->integer("tmdb_id");
-            $table->string("original_language")->nullable();;
+            $table->string("original_language")->nullable();
+            $table->string("backdrop_path")->nullable();
             $table->string("original_title")->nullable();
             $table->text("overview")->nullable();
             $table->float("popularity", 10, 5)->nullable();
@@ -24,6 +25,7 @@ return new class extends Migration
             $table->string("title");
             $table->float("vote_average");
             $table->integer("vote_count");
+            $table->boolean("has_details")->default(0);
         });
     }
 

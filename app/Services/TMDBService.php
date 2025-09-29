@@ -31,20 +31,17 @@ class TMDBService {
         if (!$params) {
             throw new \Exception("No search parameters found, aborting");
         }
+        $getMovieDetails = isset($params["details"]) ? true : false;
         $prepared_params = $this->prepareParametersForDiscover($params);
 
         Log::info($prepared_params);
 
         $moviesFromTmdb = $this->tmdbApi->discover($prepared_params);
-        $ids = $this->movieService->insertMoviesFromApi($moviesFromTmdb);
-
-            // TODO
-            // If the User checked the "detailed movie data"
-            // Check which movies have teh detailed data (have a bool field "detailed_data")
-            // Get details for every movie without detailed data 
+        $result = $this->movieService->processMovies($moviesFromTmdb, $getMovieDetails); //TODO: rename this method
+        $ids = $result['movieTmdbIds'];
 
         $search->movies_tmdb_ids = implode(',', $ids);
-        $search->status = 'done';
+        $search->status = $result['status'];
         $search->save();
     }
 
@@ -56,13 +53,7 @@ class TMDBService {
      */
     private function prepareParametersForDiscover(array $params) : array
     {
-
         Log::info($params);
-
-        // Title
-        if (key_exists('title', $params) and $params['title']) {
-            $prepared_params['title'] = $params['title'];
-        }
 
         // Genres
         $prepared_params = [];

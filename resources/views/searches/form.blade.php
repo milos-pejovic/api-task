@@ -15,25 +15,33 @@
                 <input type="text" name="search_name" id="search_name" class="form-control">
             </div>
 
-            <div class="mb-3 col-4">
-                <label for="title" class="form-label">Movie Title</label>
-                <input type="text" name="title" id="title" class="form-control">
+            <hr />
+
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="details" name="details">
+                <label class="form-check-label" for="details">
+                Get movie details (slower)
+                </label>
             </div>
+
+            <hr />
 
             <div class="mb-3 col-4">
                 <label for="release_from" class="form-label">Released From</label>
                 <input type="date" name="release_from" id="release_from" class="form-control">
             </div>
 
-            {{-- Release To --}}
+            <hr />
+
             <div class="mb-3 col-4">
                 <label for="release_to" class="form-label">Released To</label>
                 <input type="date" name="release_to" id="release_to" class="form-control">
             </div>
 
-            {{-- Genres --}}
+            <hr />
+
             <div class="mb-3">
-                <label class="form-label">Genres</label>
+                <label class="form-label">With genres</label>
                 <div class="row">
                     @foreach ($genres as $genre_id => $genre_name)
                         <div class="col-md-4 col-sm-6">

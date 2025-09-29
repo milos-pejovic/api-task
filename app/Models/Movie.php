@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Movie extends Model
 {
+    protected $guarded = [];
+
     public function genres() : BelongsToMany
     {
         return $this->belongsToMany(Genre::class);

@@ -57,11 +57,12 @@ class SearchController extends Controller
      */
     public function processForm(Request $request){
         $validated = $request->validate([
-            'search_name'  => 'required|string|max:255',
+            'search_name'   => 'required|string|max:255',
             'release_from'  => 'nullable|date',
             'release_to'    => 'nullable|date|after_or_equal:release_from',
-            'genres'         => 'nullable|array',
-            'genres.*'       => 'integer',
+            'genres'        => 'nullable|array',
+            'genres.*'      => 'integer',
+            'details'       => 'nullable'
         ]);
 
         $search_id = Search::create($validated);
@@ -82,7 +83,7 @@ class SearchController extends Controller
     }
 
     /**
-     * Undocumented function
+     * report
      *
      * @param integer $searchId
      * @return void
