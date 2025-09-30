@@ -34,37 +34,57 @@
                                 <h5 class="card-title mb-1">{{ $movie->title }}</h5>
                                 <small class="text-muted d-block mb-2">
                                     Original: {{ $movie->original_title ?? 'N/A' }} | 
-                                    Lang: {{ $movie->original_language ?? 'N/A' }}
+                                    Lang: {{ $movie->original_language ?? 'N/A' }} | 
+                                    TMDB ID: {{ $movie->tmdb_id }}
                                 </small>
 
+                                {{-- Overview --}}
                                 <p class="card-text small mb-2">
-                                    {{ Str::limit($movie->overview ?? 'No description available.', 120) }}
+                                    {{ Str::limit($movie->overview ?? 'No description available.', 160) }}
                                 </p>
 
-                                <div class="d-flex flex-wrap small">
-                                    <span class="me-3"><strong>Release:</strong> {{ $movie->release_date ?? 'Unknown' }}</span>
-                                    <span class="me-3"><strong>Pop:</strong> {{ number_format($movie->popularity, 1) }}</span>
-                                    <span class="me-3"><strong>⭐</strong> {{ $movie->vote_average }} ({{ $movie->vote_count }})</span>
-                                    
-                                    <span><strong>ID:</strong> {{ $movie->tmdb_id }}</span>
+                                <div class="row small">
+                                    {{-- Column 1 --}}
+                                    <div class="col-md-6">
+                                        <p><strong>Release:</strong> {{ $movie->release_date ?? 'Unknown' }}</p>
+                                        <p><strong>Popularity:</strong> {{ number_format($movie->popularity, 1) }}</p>
+                                        <p><strong>⭐ Rating:</strong> {{ $movie->vote_average }} ({{ $movie->vote_count }} votes)</p>
+                                        <p><strong>Has Details:</strong> {{ $movie->has_details ? 'Yes' : 'No' }}</p>
+                                        <p><strong>Backdrop:</strong> {{ $movie->backdrop_path ?? 'N/A' }}</p>
+                                    </div>
+
+                                    {{-- Column 2 --}}
+                                    <div class="col-md-6">
+                                        <p><strong>Budget:</strong> {{ $movie->budget ?? 'N/A' }}</p>
+                                        <p><strong>Revenue:</strong> {{ $movie->revenue ?? 'N/A' }}</p>
+                                        <p><strong>Status:</strong> {{ $movie->status ?? 'N/A' }}</p>
+                                        <p><strong>Tagline:</strong> <em>{{ $movie->tagline ?? 'N/A' }}</em></p>
+                                        <p><strong>Origin Country:</strong> {{ $movie->origin_country ?? 'N/A' }}</p>
+                                        @if($movie->homepage)
+                                            <p><strong>Homepage:</strong> 
+                                                <a href="{{ $movie->homepage }}" target="_blank">{{ $movie->homepage }}</a>
+                                            </p>
+                                        @endif
+                                    </div>
                                 </div>
 
-                                <div class="d-flex flex-wrap small">
-                                    @if (isset($movie->genres) and count($movie->genres) > 0)
-                                        <span class="me-3"><strong>Genres:</strong>
+                                {{-- Genres --}}
+                                <div class="d-flex flex-wrap small mt-2">
+                                    <strong class="me-2">Genres:</strong>
+                                    @if(isset($movie->genres) && count($movie->genres) > 0)
                                         @foreach($movie->genres as $genre)
-                                            <span class="me-3">{{ $genre->name }}</span>
+                                            <span class="badge bg-secondary me-2">{{ $genre->name }}</span>
                                         @endforeach
-                                        </span>
                                     @else
-                                        <span><strong>No genres data</strong></span>
+                                        <span class="text-muted">No genres data</span>
                                     @endif
                                 </div>
 
+                                {{-- External link --}}
                                 <div class="mt-2">
                                     <a href="https://www.themoviedb.org/movie/{{ $movie->tmdb_id }}" target="_blank" 
                                     class="btn btn-sm btn-outline-primary">
-                                    View on TMDB
+                                        View on TMDB
                                     </a>
                                 </div>
                             </div>
@@ -73,6 +93,7 @@
                     </div>
                 </div>
             </div>
+
 
 
         @endforeach

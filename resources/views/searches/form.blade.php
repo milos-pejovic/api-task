@@ -17,7 +17,8 @@
 
             <hr />
 
-            <div class="form-check">
+            <!-- Get details -->
+            <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="details" name="details">
                 <label class="form-check-label" for="details">
                 Get movie details (slower)
@@ -26,26 +27,121 @@
 
             <hr />
 
-            <div class="mb-3 col-4">
-                <label for="release_from" class="form-label">Released From</label>
-                <input type="date" name="release_from" id="release_from" class="form-control">
+            <!-- Release year -->
+            <div class="row mb-3">
+                <div class="col-3">
+                    <label for="release_from" class="form-label">Released From</label>
+                    <input type="date" name="release_from" id="release_from" class="form-control">
+                </div>
+
+                <div class="col-3">
+                    <label for="release_to" class="form-label">Released To</label>
+                    <input type="date" name="release_to" id="release_to" class="form-control">
+                </div>
             </div>
 
             <hr />
 
-            <div class="mb-3 col-4">
-                <label for="release_to" class="form-label">Released To</label>
-                <input type="date" name="release_to" id="release_to" class="form-control">
+            <!-- Sorting -->
+            <div class="row mb-3 align-items-center">
+                <!-- Dropdown -->
+                <div class="col-auto">
+                    <label for="sort_by" class="form-label me-2">Sort By</label>
+                    <select name="sort_by" id="sort_by" class="form-select">
+                        <option value="original_title">Original Title</option>
+                        <option value="popularity">Popularity</option>
+                        <option value="revenue">Revenue</option>
+                        <option value="primary_release_date">Primary Release Date</option>
+                        <option value="title">Title</option>
+                        <option value="vote_average">Vote Average</option>
+                        <option value="vote_count">Vote Count</option>
+                    </select>
+                </div>
+
+                <!-- Radio buttons -->
+                <div class="col-auto">
+                    <label for="sort_order" class="form-label me-2">Sort direction</label><br />
+                    <div class="form-check form-switch form-check-inline">
+                        <input class="form-check-input" type="radio" name="sort_order" id="asc" value="asc" checked>
+                        <label class="form-check-label" for="asc">Ascending</label>
+                    </div>
+                    <div class="form-check form-switch form-check-inline">
+                        <input class="form-check-input" type="radio" name="sort_order" id="desc" value="desc">
+                        <label class="form-check-label" for="desc">Descending</label>
+                    </div>
+                </div>
             </div>
 
             <hr />
 
+            <!-- Vote average -->
+            <div class="row align-items-center">
+                <!-- Dropdown -->
+                <div class="col-2">
+                    <label for="vote_average" class="form-label me-2">Vote average</label>
+                    <select name="vote_average" id="vote_average" class="form-select">
+                        <option value="-">Any</option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+
+                <!-- Radio buttons -->
+                <div class="col-auto">
+                    <label for="sort_order" class="form-label me-2">Direction</label><br />
+                    <div class="form-check form-switch form-check-inline">
+                        <input class="form-check-input" type="radio" name="vote_average_direction" id="vote_average_gte" value="gte" checked>
+                        <label class="form-check-label" for="vote_average_gte">Greater than</label>
+                    </div>
+                    <div class="form-check form-switch form-check-inline">
+                        <input class="form-check-input" type="radio" name="vote_average_direction" id="vote_average_lte" value="lte">
+                        <label class="form-check-label" for="vote_average_lte">Less than</label>
+                    </div>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- Vote count -->
+            <div class="row mb-3 align-items-center">
+                <!-- Dropdown -->
+                 <div class="mb-3 col-auto">
+                    <label for="vote_count" class="form-label">Vote count</label>
+                    <input type="number" name="vote_count" id="vote_count" class="form-control" value="1000">
+                </div>
+
+                <!-- Radio buttons -->
+                <div class="col-auto">
+                    <label for="sort_order" class="form-label me-2">Sort direction</label><br />
+                    <div class="form-check form-switch form-check-inline">
+                        <input class="form-check-input" type="radio" name="vote_count_direction" id="vote_count_gte" value="gte" checked>
+                        <label class="form-check-label" for="vote_count_gte">Greater than</label>
+                    </div>
+                    <div class="form-check form-switch form-check-inline">
+                        <input class="form-check-input" type="radio" name="vote_count_direction" id="vote_count_lte" value="lte">
+                        <label class="form-check-label" for="vote_count_lte">Less than</label>
+                    </div>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- With genres -->
             <div class="mb-3">
                 <label class="form-label">With genres</label>
                 <div class="row">
                     @foreach ($genres as $genre_id => $genre_name)
                         <div class="col-md-4 col-sm-6">
-                            <div class="form-check">
+                            <div class="form-check form-switch">
                                 <input type="checkbox" 
                                     name="genres[]" 
                                     value="{{ $genre_id }}" 
@@ -82,69 +178,3 @@
     </form>
 
 @endsection
-
-
-
-
-
-
-<!-- 
-primary_release_year
-int32
-
-primary_release_date.gte
-date
-
-primary_release_date.lte
-date
-
-release_date.gte
-date
-
-release_date.lte
-date
-
-sort_by
-original_title.asc
-original_title.desc
-popularity.asc
-popularity.desc
-revenue.asc
-revenue.desc
-primary_release_date.asc
-title.asc
-title.desc
-primary_release_date.desc
-vote_average.asc
-vote_average.desc
-vote_count.asc
-vote_count.desc
-
-vote_average.gte
-float
-vote_average.lte
-float
-vote_count.gte
-float
-vote_count.lte
-float
-
-
-with_cast
-can be a comma (AND) or pipe (OR) separated query
-
-with_crew
-can be a comma (AND) or pipe (OR) separated query
-
-with_genres
-can be a comma (AND) or pipe (OR) separated query
-
-
-with_runtime.gte
-int32
-with_runtime.lte
-int32
-
-without_genres
-
--->

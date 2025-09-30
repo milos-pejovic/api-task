@@ -6,36 +6,12 @@ use Illuminate\Http\Request;
 use App\Models\Search;
 use App\Jobs\ProcessMovieDataJob;
 use App\Models\Movie;
+use App\Utils\GenreUtils;
+use Illuminate\Validation\Rule;
 
 class SearchController extends Controller
 {
-    /**
-     * Genre IDs in The Movie Database
-     * //TODO Move this to a utility class
-     *
-     * @var array
-     */
-    private array $genres = [
-        28    => "Action",
-        12    => "Adventure",
-        16    => "Animation",
-        35    => "Comedy",
-        80    => "Crime",
-        99    => "Documentary",
-        18    => "Drama",
-        10751 => "Family",
-        14    => "Fantasy",
-        36    => "History",
-        27    => "Horror",
-        10402 => "Music",
-        9648  => "Mystery",
-        10749 => "Romance",
-        878   => "Science Fiction",
-        10770 => "TV Movie",
-        53    => "Thriller",
-        10752 => "War",
-        37    => "Western",
-    ];
+    private array $sortBy = ['original_title', 'popularity', 'revenue', 'primary_release_date', 'title', 'vote_average', 'vote_count'];
 
     /**
      * showForm
@@ -44,8 +20,10 @@ class SearchController extends Controller
      * @return Illuminate\View\View
      */
     public function showForm(){
+        $genres = GenreUtils::getGenreTmdbIdToNameMapping();
         return view('searches.form')->with([
-            "genres" => $this->genres
+            'genres' => $genres,
+            'sortBy' => $this->sortBy
         ]);
     }
 
@@ -57,12 +35,18 @@ class SearchController extends Controller
      */
     public function processForm(Request $request){
         $validated = $request->validate([
-            'search_name'   => 'required|string|max:255',
-            'release_from'  => 'nullable|date',
-            'release_to'    => 'nullable|date|after_or_equal:release_from',
-            'genres'        => 'nullable|array',
-            'genres.*'      => 'integer',
-            'details'       => 'nullable'
+            'search_name'               => 'required|string|max:255',
+            'release_from'              => 'nullable|date',
+            'release_to'                => 'nullable|date|after_or_equal:release_from',
+            'genres'                    => 'nullable|array',
+            'genres.*'                  => 'integer',
+            'details'                   => 'nullable',
+            'sort_by'                   => Rule::in($this->sortBy),
+            'sort_order'                => Rule::in(['asc', 'desc']),
+            'vote_average'              => 'nullable', Rule::in(['-', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+            'vote_average_direction'    => Rule::in(['lte', 'gte']),
+            'vote_count'                => 'nullable|integer',
+            'vote_count_direction'      => Rule::in(['lte', 'gte'])
         ]);
 
         $search_id = Search::create($validated);
@@ -89,10 +73,10 @@ class SearchController extends Controller
      * @return void
      */
     public function report(int $searchId){
-        //TODO: move this somewhere else?
         $search = Search::find($searchId);
         $movieTmdbIds = explode(',', $search->movies_tmdb_ids);
         $movies = Movie::whereIn('tmdb_id', $movieTmdbIds)->with('genres')->get();
+
         return view('searches.report')->with([
             'movies' => $movies
         ]);
@@ -102,8 +86,6 @@ class SearchController extends Controller
     public function test() {
         // $genres = \App\Models\Genre::all()->toArray();
         // $genreMapping = array_combine(array_column($genres, "tmdb_id"), array_column($genres, "id"));
-
-        // dd($genreMapping );
 
         $search = Search::latest()->first();
         $tmdb = new \App\Services\TMDBService();

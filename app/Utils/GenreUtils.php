@@ -7,16 +7,27 @@ use App\Models\Genre;
 class GenreUtils {
 
     /**
-     * Undocumented function
+     * getGenreMappings
      *
      * @return array
      */
     public static function getGenreMappings() : array
     {
-        $genres = Genre::all()->toArray();
-        return array_combine(
-            array_column($genres, "tmdb_id"), 
-            array_column($genres, "id")
-        );
+        return $genres = Genre::all()
+            ->pluck('id', 'tmdb_id')
+            ->toArray();
+    }
+
+
+    /**
+     * getGenreTmdbIdToNameMapping
+     *
+     * @return array
+     */
+    public static function getGenreTmdbIdToNameMapping(): array
+    {
+        return $genres = Genre::all()
+            ->pluck('name', 'tmdb_id')
+            ->toArray();
     }
 }

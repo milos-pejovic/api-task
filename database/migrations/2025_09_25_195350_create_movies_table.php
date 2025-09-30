@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('movies', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->integer("tmdb_id");
+            $table->integer("tmdb_id")->unique();
             $table->string("original_language")->nullable();
             $table->string("backdrop_path")->nullable();
             $table->string("original_title")->nullable();
@@ -22,10 +22,18 @@ return new class extends Migration
             $table->float("popularity", 10, 5)->nullable();
             $table->string("poster_path")->nullable();
             $table->date("release_date")->nullable();
-            $table->string("title");
-            $table->float("vote_average");
-            $table->integer("vote_count");
+            $table->string("title")->default('N/A');
+            $table->float("vote_average")->default(0.0);
+            $table->integer("vote_count")->default(0);
             $table->boolean("has_details")->default(0);
+
+            // Additional data from basic "details" API route
+            $table->string("budget")->nullable();
+            $table->string("homepage")->nullable();
+            $table->string("origin_country")->nullable();
+            $table->string("revenue")->nullable();
+            $table->string("status", 32)->nullable();
+            $table->text("tagline")->nullable();
         });
     }
 

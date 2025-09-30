@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class DatabaseUtils {
 
-    //TODO: check if the two methods can be merged
-
     /**
      * insertMassOrOneByOneDB
      *
@@ -21,16 +19,16 @@ class DatabaseUtils {
         Log::info("Bulk insert of $numberOfRecords records into $tableName table.");
         
         try {
-            Log::info("Attempting Bulk insert of $numberOfRecords records into $tableName table.");
+            Log::info("[DB] Attempting Bulk insert of $numberOfRecords records into $tableName table.");
             DB::table('genre_movie')->insertOrIgnore($data);
         } catch (\Exception $e) {
-            Log::error("Error while bulk inserting $numberOfRecords into $tableName table.\n Attempting to insert one by one.\nError: {$e->getMessage()}");
+            Log::error("[DB] Error while bulk inserting $numberOfRecords into $tableName table.\n Attempting to insert one by one.\nError: {$e->getMessage()}");
             foreach ($data as $dataItem) {
                 try {
                     DB::create($dataItem);
                 } catch (\Exception $e) {
                     $dataJson = json_encode($dataItem);
-                    Log::error("Error inserting single record into $tableName table.\nRecord: $dataJson\nError: {$e->getMessage()}");
+                    Log::error("[DB] Error inserting single record into $tableName table.\nRecord: $dataJson\nError: {$e->getMessage()}");
                 }   
             }
         }
@@ -49,16 +47,16 @@ class DatabaseUtils {
         $numberOfRecords = count($data);
         $fullClassName = "App\\Models\\{$className}";
         try {
-            Log::info("Attempting bulk insert of $className records.");
+            Log::info("[DB] Attempting bulk insert of $className records.");
             $fullClassName::insert($data);
         } catch (\Exception $e) {
-            Log::error("Error mass inserting {$numberOfRecords} records of type {$className} into local database. Attempting entering records one by one. Error:\n {$e->getMessage()}");
+            Log::error("[DB] Error mass inserting {$numberOfRecords} records of type {$className} into local database. Attempting entering records one by one. Error:\n {$e->getMessage()}");
             foreach ($data as $dataItem) {
                 try {
                     $fullClassName::create($dataItem);
                 } catch (\Exception $e) {
                     $dataJson = json_encode($dataItem);
-                    Log::error("Error inserting record of type {$className} into local database.\n Record: {$dataJson} \nError: {$e->getMessage()}");
+                    Log::error("[DB] Error inserting record of type {$className} into local database.\n Record: {$dataJson} \nError: {$e->getMessage()}");
                 }
             }
         }

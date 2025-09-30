@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log; 
-use App\Models\Search;
 
 class TMDBApiService {
     private string $baseUrl = 'https://api.themoviedb.org/3';
@@ -19,14 +18,15 @@ class TMDBApiService {
     }
 
     /**
-     * Undocumented function
+     * callRoute
      *
      * @param string $routeName
      * @param string $url
      * @param array|null $params
-     * @return void
+     * @return ?array
      */
-    public function callRoute(string $routeName, string $url, ?array $params = null) {
+    public function callRoute(string $routeName, string $url, ?array $params = null) : ?array
+    {
         try {
             $response = Http::withToken($this->api_key)
                 ->retry($this->retries, $this->retriesInterval)
@@ -42,7 +42,8 @@ class TMDBApiService {
                 "Error calling route {$routeName} (Status {$response->status()}): " . $response->body()
             );
         } catch (\Exception $e) {
-            Log::error("Error: {$e->getMessage()}");
+            Log::error("[API] Failed calling route {$routeName} (Status {$response->status()}): " . $response->body());
+            return null;
         }
     }
 
