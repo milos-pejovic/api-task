@@ -22,9 +22,6 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('search.form.show') }}">New Search</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('search.test') }}">TEST</a>
-                </li>
             </ul>
         </div>
     </nav>
