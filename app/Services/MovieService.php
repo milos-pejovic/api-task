@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Movie;
 use App\Models\Genre;
+use App\Models\Crew;
 use Illuminate\Support\Facades\Log;
 use App\Utils\DatabaseUtils;
 use App\Utils\GenreUtils;
@@ -34,7 +35,9 @@ class MovieService {
         $this->handleGenres($moviesTmbdData);
 
         if ($getMovieDetails) {
-            $this->handleMovieDetails($moviesTmbdData);
+            $details = $this->getMovieDetails($moviesTmbdData);
+            $this->insertMovieDetails($details);
+            $this->handleCast($details);
         }
 
         return [
@@ -44,57 +47,122 @@ class MovieService {
     }
 
     /**
-     * Undocumented function
+     * getMovieDetails
      *
      * @param array $moviesTmbdData
-     * @return void
+     * @return array
      */
-    private function handleMovieDetails(array $moviesTmbdData) {
+    private function getMovieDetails(array $moviesTmbdData) : array
+    {
         $moviesToProcess = Movie::whereIn('tmdb_id', array_column($moviesTmbdData, 'id'))
             ->where('has_details', 0)
             ->pluck('tmdb_id')
             ->toArray();
 
-        $dataToInsert = [];
+        $details = [];
         foreach ($moviesToProcess as $movieTmdbId) {
-            $detailsFromApi = $this->tmdbApiService->getSingleMovieDetails($movieTmdbId);
-
-            // If API call failed, skip this record
-            if (!$detailsFromApi) {
+            $data = $this->tmdbApiService->getSingleMovieDetails($movieTmdbId);
+            if (!$data) {
                 continue;
             }
+            $details[$movieTmdbId] = $data;
+        }
+        return $details;
+    }
 
+    /**
+     * insertMovieDetails
+     *
+     * @param array $details
+     * @return void
+     */
+    private function insertMovieDetails(array $details) {
+        $dataToInsert = [];
+        foreach ($details as $tmdb_id => $movieDetails) {
             $dataToInsert[] = [
-                'tmdb_id' => $movieTmdbId,
-                'budget' => $detailsFromApi['budget'],
-                'homepage' => $detailsFromApi['homepage'],
-                'origin_country' => implode(',', $detailsFromApi['origin_country']),
-                'revenue' => $detailsFromApi['revenue'],
-                'tagline' => $detailsFromApi['tagline'],
+                'tmdb_id' => $tmdb_id,
+                'status' => $movieDetails['status'],
+                'budget' => $movieDetails['budget'],
+                'homepage' => $movieDetails['homepage'],
+                'origin_country' => implode(',', $movieDetails['origin_country']),
+                'revenue' => $movieDetails['revenue'],
+                'tagline' => $movieDetails['tagline'],
                 'has_details' => 1
             ];
         }
 
-        $tmdbIds = Movie::whereIn('tmdb_id', array_column($dataToInsert, 'tmdb_id'))->pluck('tmdb_id')->toArray();
+        DatabaseUtils::bulkUpsertMoviesOrOneByOne($dataToInsert);
+    }
 
+    /**
+     * handleMovieDetails
+     *
+     * @param array $moviesTmbdData
+     * @return void
+     */
+    private function handleCast(array $details) {
 
-        //TODO: Research how to move this into DatabaseUtils class
-        try {
-            Log::info("[DB] Attempting mass upsert of movie records.");
-            Movie::whereIn('tmdb_id', array_column($dataToInsert, 'tmdb_id'))
-                ->upsert($dataToInsert, ['tmdb_id'], ['budget', 'homepage', 'origin_country', 'revenue', 'tagline']);
-            Log::info('[DB] Mass upsert successful');
-        } catch (\Exception $e) {
-            Log::error("[DB] Mass upsert failed. Attempting one by one. Error: {$e->getMessage()}");
-            foreach ($dataToInsert as $dataItem) {
-                try {
-                    Movie::where('tmdb_id', $dataItem['tmdb_id'])
-                        ->update($dataItem);
-                } catch (\Exception $e) {
-                    Log::error("[DB] Failed updating move record with tmdb_id {$dataItem['tmdb_id']}\nError: {$e->getMessage()}");
+        // Insert cast
+        $castDataToInsert = [];
+        foreach ($details as $movieTmdbData) {
+            //TODO: For now we process only cast, not crew (director, art direcetor, ...)
+            $cast = $movieTmdbData['credits']['cast'];
+            $castTmdbIds = array_column($cast, 'id');
+            $existingCastTmdbIds = Crew::whereIn('tmdb_id', $castTmdbIds)
+                ->pluck('tmdb_id')
+                ->toArray();
+
+            $castToProcess = array_filter($cast, function($castMember) use ($existingCastTmdbIds) {
+                return !in_array($castMember['id'], $existingCastTmdbIds);
+            });
+
+            foreach ($castToProcess as $castMemberData) {
+                // We deliberately set tmdb_id as the array key so that if multiple movies would add 
+                // the same actor the new data overwrites the old. We remove duplicates this way.
+                $castDataToInsert[$castMemberData['id']] = [
+                    'tmdb_id' => $castMemberData['id'],
+                    'gender' => $castMemberData['gender'],
+                    'name' => $castMemberData['name'],
+                    'profile_path' => $castMemberData['profile_path']
+                ];
+            }
+        }
+        DatabaseUtils::insertMassOrOneByOne($castDataToInsert, 'Crew');
+
+        // Handle movies to cast relationship
+
+        // Get tmdb_id of all the cast from the movie details
+        $castTmbdIds = array_reduce($details, function($allCastTmdbIds, $movieData) {
+            $allCastTmdbIds = array_merge($allCastTmdbIds, array_column($movieData['credits']['cast'], 'id'));
+            return $allCastTmdbIds;
+        }, []);
+        $castTmbdIds = array_unique($castTmbdIds);
+
+        $castTmbdIdToId = Crew::whereIn('tmdb_id', $castTmbdIds)
+            ->pluck('id', 'tmdb_id')
+            ->toArray();
+
+        $moviesTmdbToId = Movie::whereIn('tmdb_id', array_column($details, 'id'))
+            ->pluck('id', 'tmdb_id')
+            ->toArray();
+    
+        $movieToCastRelationship = [];
+
+        foreach($details as $movieTmdbData) {
+            foreach($movieTmdbData['credits']['cast'] as $castData) {
+                if (array_key_exists($castData['id'], $castTmbdIdToId)) {
+                    $movieToCastRelationship[] = [
+                        'movie_id' => $moviesTmdbToId[$movieTmdbData['id']],
+                        'crew_id' => $castTmbdIdToId[$castData['id']],
+                        'role' => $castData['character'],
+                    ];
+                } else {
+                    Log::error("[DB] Crew tmdb_id: {$castData['id']}");
                 }
             }
         }
+
+        DatabaseUtils::insertMassOrOneByOneDB($movieToCastRelationship, 'crew_movie');
     }
 
     /**
@@ -169,6 +237,7 @@ class MovieService {
                 'poster_path' => $movieData['poster_path'],
                 'vote_average' => $movieData['vote_average'],
                 'vote_count' => $movieData['vote_count'],
+                'popularity' => $movieData['popularity'],
                 'release_date' => ($movieData['release_date']) ? $movieData['release_date']  : null,
                 'created_at' => now()->toDateTimeString(),
                 'updated_at' => now()->toDateTimeString()

@@ -66,7 +66,8 @@ class TMDBApiService {
      */
     public function getSingleMovieDetails(int $movieId){
         $url = "{$this->baseUrl}/movie/{$movieId}";
-        return $this->callRoute("single_move_details", $url);
+        $parameters = ['append_to_response' => 'credits'];
+        return $this->callRoute("single_move_details", $url, $parameters);
     }
 
     /**

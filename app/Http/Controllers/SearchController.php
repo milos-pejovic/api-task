@@ -31,7 +31,7 @@ class SearchController extends Controller
      * processForm
      *
      * @param Request $request
-     * @return void //TODO: return redirect
+     * @return void
      */
     public function processForm(Request $request){
         $validated = $request->validate([
@@ -40,7 +40,7 @@ class SearchController extends Controller
             'release_to'                => 'nullable|date|after_or_equal:release_from',
             'genres'                    => 'nullable|array',
             'genres.*'                  => 'integer',
-            'details'                   => 'nullable',
+            'get_details'               => 'nullable',
             'sort_by'                   => Rule::in($this->sortBy),
             'sort_order'                => Rule::in(['asc', 'desc']),
             'vote_average'              => 'nullable', Rule::in(['-', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
@@ -75,21 +75,13 @@ class SearchController extends Controller
     public function report(int $searchId){
         $search = Search::find($searchId);
         $movieTmdbIds = explode(',', $search->movies_tmdb_ids);
-        $movies = Movie::whereIn('tmdb_id', $movieTmdbIds)->with('genres')->get();
+        $movies = Movie::whereIn('tmdb_id', $movieTmdbIds)
+            ->with('genres')
+            ->with('crew')
+            ->get();
 
         return view('searches.report')->with([
             'movies' => $movies
         ]);
     }
-
-    //TODO: remove
-    public function test() {
-        // $genres = \App\Models\Genre::all()->toArray();
-        // $genreMapping = array_combine(array_column($genres, "tmdb_id"), array_column($genres, "id"));
-
-        $search = Search::latest()->first();
-        $tmdb = new \App\Services\TMDBService();
-        $tmdb->getMovies($search->id);
-    }
-    //TODO: remove
 }

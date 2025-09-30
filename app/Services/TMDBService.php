@@ -31,12 +31,11 @@ class TMDBService {
         if (!$params) {
             throw new \Exception("No search parameters found, aborting");
         }
-        $getMovieDetails = isset($params["details"]) ? true : false;
+        $getMovieDetails = isset($params["get_details"]) ? true : false;
         $prepared_params = $this->prepareParametersForDiscover($params);
 
-        Log::info($prepared_params);
-
         $moviesFromTmdb = $this->tmdbApi->discover($prepared_params);
+
         $result = $this->movieService->processMovies($moviesFromTmdb, $getMovieDetails);
         $ids = $result['movieTmdbIds'];
 

@@ -12,5 +12,4 @@ Route::prefix('movie')->group(function () {
 Route::prefix('search')->group(function() {
     Route::get('/list', [SearchController::class, 'list'])->name('search.list');
     Route::get('/report/{id}', [SearchController::class, 'report'])->name('search.report');
-    Route::get('/test', [SearchController::class, 'test'])->name('search.test'); //TODO: remove
 });

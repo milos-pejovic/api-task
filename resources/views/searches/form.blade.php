@@ -19,8 +19,8 @@
 
             <!-- Get details -->
             <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="details" name="details">
-                <label class="form-check-label" for="details">
+                <input class="form-check-input" type="checkbox" id="get_details" name="get_details" checked>
+                <label class="form-check-label" for="get_details">
                 Get movie details (slower)
                 </label>
             </div>
@@ -53,7 +53,7 @@
                         <option value="revenue">Revenue</option>
                         <option value="primary_release_date">Primary Release Date</option>
                         <option value="title">Title</option>
-                        <option value="vote_average">Vote Average</option>
+                        <option value="vote_average" selected="selected">Vote Average</option>
                         <option value="vote_count">Vote Count</option>
                     </select>
                 </div>
@@ -62,11 +62,11 @@
                 <div class="col-auto">
                     <label for="sort_order" class="form-label me-2">Sort direction</label><br />
                     <div class="form-check form-switch form-check-inline">
-                        <input class="form-check-input" type="radio" name="sort_order" id="asc" value="asc" checked>
+                        <input class="form-check-input" type="radio" name="sort_order" id="asc" value="asc">
                         <label class="form-check-label" for="asc">Ascending</label>
                     </div>
                     <div class="form-check form-switch form-check-inline">
-                        <input class="form-check-input" type="radio" name="sort_order" id="desc" value="desc">
+                        <input class="form-check-input" type="radio" name="sort_order" id="desc" value="desc" checked>
                         <label class="form-check-label" for="desc">Descending</label>
                     </div>
                 </div>
@@ -88,7 +88,7 @@
                         <option value="4">4</option>
                         <option value="5">5</option>
                         <option value="6">6</option>
-                        <option value="7">7</option>
+                        <option value="7" selected="selected">7</option>
                         <option value="8">8</option>
                         <option value="9">9</option>
                         <option value="10">10</option>
@@ -121,7 +121,7 @@
 
                 <!-- Radio buttons -->
                 <div class="col-auto">
-                    <label for="sort_order" class="form-label me-2">Sort direction</label><br />
+                    <label for="sort_order" class="form-label me-2">Direction</label><br />
                     <div class="form-check form-switch form-check-inline">
                         <input class="form-check-input" type="radio" name="vote_count_direction" id="vote_count_gte" value="gte" checked>
                         <label class="form-check-label" for="vote_count_gte">Greater than</label>
